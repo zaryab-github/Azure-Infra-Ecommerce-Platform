@@ -1,0 +1,14 @@
+{
+  "name": "user-service",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Minimal demo service proving AKS/Azure connectivity for the Azure Enterprise DevOps Platform portfolio project.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

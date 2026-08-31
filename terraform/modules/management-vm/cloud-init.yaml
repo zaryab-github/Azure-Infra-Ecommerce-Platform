@@ -1,0 +1,41 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+
+packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg
+  - lsb-release
+  - unzip
+  - jq
+  - git
+  - docker.io
+
+runcmd:
+  # Azure CLI
+  - curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+
+  # Terraform (HashiCorp apt repo)
+  - curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+  - echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" > /etc/apt/sources.list.d/hashicorp.list
+  - apt-get update
+  - apt-get install -y terraform
+
+  # kubectl
+  - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+  - install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+  - rm -f kubectl
+
+  # Helm (used from the optional GitOps phase, harmless to have earlier)
+  - curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+  # Node.js 20 LTS (to run/test the services directly on the VM if useful)
+  - curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+  - apt-get install -y nodejs
+
+  # Let the admin user run docker without sudo
+  - usermod -aG docker ${admin_username}
+
+  - echo "Management VM bootstrap complete" > /var/log/mgmt-vm-bootstrap-done.log
