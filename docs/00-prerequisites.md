@@ -102,7 +102,7 @@ Name    CloudName    SubscriptionId                        TenantId             
 ------  -----------  ------------------------------------  ------------------------------------  -------  -----------
 PROD    AzureCloud   93f65dd4-0dba-417d-a471-d32e5de97e54  3ab5e04f-6860-4285-9f21-d0a670f3baa5  Enabled  True
 PS C:\Users\Zaryab>
-###### xxx Output xxx #######
+###### xxx Output xxx ######
 
 
 
