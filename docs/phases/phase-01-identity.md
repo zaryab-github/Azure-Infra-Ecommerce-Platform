@@ -78,6 +78,32 @@ Use this to see each piece created by hand, or to sanity-check what Terraform di
 
 ---
 
+
+
+
+#### Working of Service principle (little bit same as GCP service account)
+
+1. Create App Registration
+        │
+        ▼
+2. Create Service Principal
+        │
+        ▼
+3. Assign RBAC Role(s)
+        │
+        ▼
+4. Create Client Secret (or use OIDC/certificate)
+        │
+        ▼
+5. Terraform authenticates using:
+   - Client ID
+   - Client Secret
+   - Tenant ID
+   - Subscription ID
+
+GCP Service Account ≈ Azure Service Principal
+
+
 ## Verification
 
 ```bash
