@@ -56,6 +56,10 @@ For what each of these actually is, why it exists, and how it's used elsewhere i
 
 **Note on the Terraform service principal secret**: `azuread_service_principal_password` creates a client secret with a 1-year expiry (`main.tf` in the identity module). That's fine for a portfolio lab. In a real production setup you'd use OIDC workload identity federation for Azure DevOps/GitHub Actions instead, avoiding a stored secret entirely — set `create_terraform_service_principal = false` in your tfvars and wire that up separately if you want to practice it later.
 
+
+
+
+
 ---
 
 ## Track B — Azure Portal (manual, same end result)
@@ -76,10 +80,40 @@ Use this to see each piece created by hand, or to sanity-check what Terraform di
 4. **Managed identity** (for AKS, used starting Phase 5):
    - Inside `rg-ecommerce-prod` → **+ Create a resource** → search **User Assigned Managed Identity** → name `id-ecommerce-aks-prod`, same region → **Review + create**.
 
+- A User-Assigned Managed Identity lets AKS pods securely authenticate to Azure services (like Key Vault) without storing credentials or secrets inside the application.
+      ---
+      Create:
+      id-ecommerce-aks-prod
+
+            │
+
+      Phase 5
+      --------
+
+      AKS Cluster
+            │
+      Uses Workload Identity
+            │
+            ▼
+      Pod
+            │
+            ▼
+      Uses id-ecommerce-aks-prod
+            │
+            ▼
+      Azure issues an access token
+            │
+            ▼
+      Azure Key Vault
+            │
+            ▼
+      Returns the secret
+
 ---
 
 
 
+---
 
 #### Working of Service principle (little bit same as GCP service account)
 
