@@ -34,16 +34,48 @@ For what each of these actually is, why it exists, and how it's used elsewhere i
    ```bash
    terraform -chdir=terraform/environments/prod init \
      -backend-config="resource_group_name=rg-tfstate" \
-     -backend-config="storage_account_name=<your-storage-account-name>" \
+     -backend-config="storage_account_name=stecommercetfstate1" \
      -backend-config="container_name=tfstate" \
      -backend-config="key=prod.terraform.tfstate"
    ```
 
+### ----- Execution ----- ###
+PS C:\Users\Zaryab\Desktop\Azure-Infra-Ecommerce-Platform> terraform -chdir=terraform/environments/prod init -backend-config="resource_group_name=rg-tfstate" -backend-config="storage_account_name=stecommercetfstate1" -backend-config="container_name=tfstate" -backend-config="key=prod.terraform.tfstate"
+Initializing the backend...
+
+Successfully configured the backend "azurerm"! Terraform will automatically
+use this backend unless the backend configuration changes.
+Initializing modules...
+- identity in ..\..\modules\identity
+- management_vm in ..\..\modules\management-vm
+- network in ..\..\modules\network
+Initializing provider plugins...
+- Reusing previous version of hashicorp/azurerm from the dependency lock file
+- Reusing previous version of hashicorp/azuread from the dependency lock file
+- Installing hashicorp/azurerm v3.117.1...
+- Installed hashicorp/azurerm v3.117.1 (signed by HashiCorp)
+- Installing hashicorp/azuread v2.53.1...
+- Installed hashicorp/azuread v2.53.1 (signed by HashiCorp)
+
+Terraform has been successfully initialized!
+
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.
+### ----- Execution ----- ###
+
+
+
+
 3. Review and apply just the identity module first, so you can inspect what it creates before networking is added on top:
 
    ```bash
-   terraform -chdir=terraform/environments/prod plan -target=module.identity
-   terraform -chdir=terraform/environments/prod apply -target=module.identity
+   terraform -chdir="terraform/environments/prod" plan "-target=module.identity"
+   terraform -chdir="terraform/environments/prod" apply "-target=module.identity"
    ```
 
 4. Inspect the outputs:
@@ -72,6 +104,8 @@ Use this to see each piece created by hand, or to sanity-check what Terraform di
    - Portal → **Microsoft Entra ID** → **App registrations** → **+ New registration** → name `sp-ecommerce-terraform-prod`, single tenant → **Register**.
    - On the app's **Overview**, note the **Application (client) ID** and **Directory (tenant) ID**.
    - **Certificates & secrets** → **+ New client secret** → set an expiry, copy the secret value immediately (shown once).
+   Secret Value: 
+   Secret ID: 
 
 3. **Role assignment** (scope the app to the resource group, not the subscription):
    - Open `rg-ecommerce-prod` → **Access control (IAM)** → **+ Add** → **Add role assignment**.
