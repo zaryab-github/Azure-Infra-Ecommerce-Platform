@@ -96,4 +96,4 @@ Most networking resources here are free (VNet, subnets, NSGs, route table). The 
 
 ## Next: Phase 2b
 
-With `snet-mgmt` and its NSG in place, move on to [`docs/phase-02b-management-vm.md`](phase-02b-management-vm.md) to provision the admin VM inside it.
+With `snet-mgmt` and its NSG in place, move on to [`docs/deployment_phases/phase-02b-management-vm.md`](phase-02b-management-vm.md) to provision the admin VM inside it.

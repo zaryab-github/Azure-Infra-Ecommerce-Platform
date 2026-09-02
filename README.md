@@ -32,7 +32,7 @@ Full table with what each phase builds: [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Two machines: local bootstrap, then an in-Azure admin VM
 
-Phases 1 and 2 run from your local machine. Right after, **Phase 2b provisions a dedicated management VM** inside the VNet (its own subnet, SSH-key-only, no stored secrets — it authenticates via its own managed identity) — every phase from 3 onward runs its Terraform/kubectl/docker/az commands from that VM, not your laptop. See [`docs/00-prerequisites.md`](docs/00-prerequisites.md) §0 and [`docs/phases/phase-02b-management-vm.md`](docs/phases/phase-02b-management-vm.md).
+Phases 1 and 2 run from your local machine. Right after, **Phase 2b provisions a dedicated management VM** inside the VNet (its own subnet, SSH-key-only, no stored secrets — it authenticates via its own managed identity) — every phase from 3 onward runs its Terraform/kubectl/docker/az commands from that VM, not your laptop. See [`docs/00-prerequisites.md`](docs/00-prerequisites.md) §0 and [`docs/deployment_phases/phase-02b-management-vm.md`](docs/deployment_phases/phase-02b-management-vm.md).
 
 ## Repo layout
 
@@ -47,7 +47,7 @@ terraform/
   modules/             one module per concern (identity, network, management-vm, aks, sql, keyvault, acr, servicebus, storage, monitoring)
 kubernetes/            raw manifests (ingress, deployments, services, hpa) — populated from Phase 5
 pipelines/             Azure Pipelines YAML — populated from Phase 10
-services/              the 3 demo microservices (Node.js + Express)
+Application_services/ the 3 demo microservices (Node.js + Express)
 helm/                  optional packaging layer, for the optional GitOps phase
 scripts/               setup/bootstrap/cost-control helpers
 ```
@@ -55,10 +55,10 @@ scripts/               setup/bootstrap/cost-control helpers
 ## Getting started
 
 1. Read [`docs/00-prerequisites.md`](docs/00-prerequisites.md) — install the local bootstrap tools, generate an SSH key, log in, bootstrap the Terraform state backend.
-2. Follow [`docs/phases/phase-01-identity.md`](docs/phases/phase-01-identity.md), [`docs/phases/phase-02-networking.md`](docs/phases/phase-02-networking.md), then [`docs/phases/phase-02b-management-vm.md`](docs/phases/phase-02b-management-vm.md) — each has a Terraform track and a manual Azure Portal track.
-3. SSH into the management VM and continue from there. Later phases land the same way, one `docs/phases/phase-NN-*.md` at a time, per [`docs/ROADMAP.md`](docs/ROADMAP.md).
+2. Follow [`docs/deployment_phases/phase-01-identity.md`](docs/deployment_phases/phase-01-identity.md), [`docs/deployment_phases/phase-02-networking.md`](docs/deployment_phases/phase-02-networking.md), then [`docs/deployment_phases/phase-02b-management-vm.md`](docs/deployment_phases/phase-02b-management-vm.md) — each has a Terraform track and a manual Azure Portal track.
+3. SSH into the management VM and continue from there. Later phases land the same way, one `docs/deployment_phases/phase-NN-*.md` at a time, per [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
-Running the demo services locally (no Azure needed yet): see each service's own README under [`services/`](services), and [`docs/services.md`](docs/services.md) for what each service does, how they're implemented, and how they communicate (today and once messaging lands in Phase 7). For the Azure side, [`docs/azure-services/`](docs/azure-services) explains each Azure service used — what it is, why it's in this project, and where.
+Running the demo services locally (no Azure needed yet): see each service's own README under [`Application_services/`](Application_services), and [`docs/services.md`](docs/services.md) for what each service does, how they're implemented, and how they communicate (today and once messaging lands in Phase 7). For the Azure side, [`docs/azure-services/`](docs/azure-services) explains each Azure service used — what it is, why it's in this project, and where.
 
 ## Cost discipline
 

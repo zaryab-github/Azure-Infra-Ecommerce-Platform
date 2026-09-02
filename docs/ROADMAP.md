@@ -40,11 +40,11 @@ Target: stay within a $200 Azure credit. AKS (from Phase 5) and the management V
 
 ## Where things run, after Phase 2b
 
-Once the management VM exists, it is the place to run Terraform, `kubectl`, `docker build`, and `az` for every phase from 3 onward — not your local machine. Your laptop's job ends at Phase 2b: install a minimal bootstrap toolset, stand up Identity + Networking + the VM itself, then SSH in. See `docs/00-prerequisites.md` and `docs/phases/phase-02b-management-vm.md`.
+Once the management VM exists, it is the place to run Terraform, `kubectl`, `docker build`, and `az` for every phase from 3 onward — not your local machine. Your laptop's job ends at Phase 2b: install a minimal bootstrap toolset, stand up Identity + Networking + the VM itself, then SSH in. See `docs/00-prerequisites.md` and `docs/deployment_phases/phase-02b-management-vm.md`.
 
 ## Working agreement for this repo
 
-- Each phase gets a `docs/phases/phase-NN-<name>.md` covering both the Terraform path and the manual Azure Portal path.
+- Each phase gets a `docs/deployment_phases/phase-NN-<name>.md` covering both the Terraform path and the manual Azure Portal path.
 - Terraform modules not yet built contain a `README.md` stating which phase will populate them — check the module directory before assuming something doesn't exist.
 - No `terraform apply` or `az` resource-creation commands are run automatically; the user runs them after reviewing, once authenticated locally (or from the management VM, from Phase 2b on).
 - `docs/services.md` explains what each of the three demo services does, how they're implemented, and how they communicate — read it alongside each service's own `README.md`.

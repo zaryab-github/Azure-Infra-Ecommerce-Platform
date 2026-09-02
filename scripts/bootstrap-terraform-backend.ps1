@@ -80,7 +80,7 @@ Write-Host "`nBootstrap complete." -ForegroundColor Green
 Write-Host "Resource group:     $ResourceGroupName"
 Write-Host "Storage account:    $StorageAccountName"
 Write-Host "Container:          tfstate"
-Write-Host "`nUse these when running terraform init (see docs/phases/phase-01-identity.md):" -ForegroundColor Cyan
+Write-Host "`nUse these when running terraform init (see docs/deployment_phases/phase-01-identity.md):" -ForegroundColor Cyan
 Write-Host "  terraform -chdir=terraform/environments/prod init ``"
 Write-Host "    -backend-config=""resource_group_name=$ResourceGroupName"" ``"
 Write-Host "    -backend-config=""storage_account_name=$StorageAccountName"" ``"

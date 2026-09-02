@@ -6,7 +6,7 @@ An Azure Virtual Machine is standard IaaS compute — you pick an image, a size,
 
 ## Why this project uses one
 
-This is the one place in the project's core roadmap where a VM isn't strictly required by the architecture diagram — it's a deliberate addition (Phase 2b) for a specific reason: giving infrastructure operations (Terraform, kubectl, docker, az) a controlled, auditable home inside the VNet, rather than running them from whatever laptop happens to be nearby. See [`docs/phases/phase-02b-management-vm.md`](../phases/phase-02b-management-vm.md) for the full rationale and setup steps.
+This is the one place in the project's core roadmap where a VM isn't strictly required by the architecture diagram — it's a deliberate addition (Phase 2b) for a specific reason: giving infrastructure operations (Terraform, kubectl, docker, az) a controlled, auditable home inside the VNet, rather than running them from whatever laptop happens to be nearby. See [`docs/deployment_phases/phase-02b-management-vm.md`](../deployment_phases/phase-02b-management-vm.md) for the full rationale and setup steps.
 
 ## Where it's wired in
 

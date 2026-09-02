@@ -1,6 +1,6 @@
 # Services — purpose, implementation, and communication
 
-This is the one place that explains all three demo services together: what each one is *for*, what it actually does today, and how they fit together as a system. Each service also has its own `README.md` (`services/<name>/README.md`) with just its own run/build commands — read this file first for the big picture, then the per-service README for the specifics.
+This is the one place that explains all three demo services together: what each one is *for*, what it actually does today, and how they fit together as a system. Each service also has its own `README.md` (`Application_services/<name>/README.md`) with just its own run/build commands — read this file first for the big picture, then the per-service README for the specifics.
 
 ## Why three services, and why these three
 
@@ -60,7 +60,7 @@ Client -> POST /api/orders on order-service
       Calls product-service to decrement stock for the ordered item
 ```
 
-This exists to demonstrate the roadmap's messaging pattern (decoupled, asynchronous inter-service communication — the order can be accepted immediately without waiting on inventory to update synchronously) rather than because a stock decrement genuinely requires a message queue at this scale. Until Phase 7 lands, `order-service`'s `POST /api/orders` just appends to its in-memory array and returns — there is no queue publish yet, and the code comment in `services/order-service/src/index.js` marks exactly where that will be added.
+This exists to demonstrate the roadmap's messaging pattern (decoupled, asynchronous inter-service communication — the order can be accepted immediately without waiting on inventory to update synchronously) rather than because a stock decrement genuinely requires a message queue at this scale. Until Phase 7 lands, `order-service`'s `POST /api/orders` just appends to its in-memory array and returns — there is no queue publish yet, and the code comment in `Application_services/order-service/src/index.js` marks exactly where that will be added.
 
 ## Data ownership (planned, Phase 6)
 

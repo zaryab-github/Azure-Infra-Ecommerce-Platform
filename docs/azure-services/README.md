@@ -1,6 +1,6 @@
 # Azure services reference
 
-While [`docs/phases/`](../phases) explains *how to provision* each phase (Terraform steps + Portal steps), this directory explains **what each individual Azure service actually is, why this project uses it, and where it's wired in**. Read the phase doc for the how-to; read the matching file here for the why.
+While [`docs/deployment_phases/`](../deployment_phases) explains *how to provision* each phase (Terraform steps + Portal steps), this directory explains **what each individual Azure service actually is, why this project uses it, and where it's wired in**. Read the phase doc for the how-to; read the matching file here for the why.
 
 | Area | Azure service | Used since | Doc |
 |---|---|---|---|

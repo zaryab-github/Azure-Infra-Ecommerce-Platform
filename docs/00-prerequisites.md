@@ -6,12 +6,12 @@ One-time setup before Phase 1. Do this locally in your own terminal — nothing 
 
 This project uses a **management VM in Azure** (built in Phase 2b, right after Networking) as the admin/jump box for everything past that point — every `terraform apply`, every `kubectl`, every `docker build`, every `az` command from Phase 3 onward runs **from that VM**, not from your laptop. That's a deliberately production-style pattern: infrastructure operations happen from a controlled, auditable box inside the VNet, not from whatever machine happens to be on someone's desk.
 
-That creates one chicken-and-egg problem: the VM can't create itself. So your **local machine's job is narrow and temporary** — install a minimal toolset, then use it only to stand up Phase 1 (Identity), Phase 2 (Networking), and Phase 2b (the VM itself). After that, you SSH into the VM and do everything else from there; the VM comes pre-loaded (via cloud-init) with Terraform, Azure CLI, Docker, kubectl, Helm, and Node.js — see `docs/phases/phase-02b-management-vm.md` for the full list and how it's provisioned.
+That creates one chicken-and-egg problem: the VM can't create itself. So your **local machine's job is narrow and temporary** — install a minimal toolset, then use it only to stand up Phase 1 (Identity), Phase 2 (Networking), and Phase 2b (the VM itself). After that, you SSH into the VM and do everything else from there; the VM comes pre-loaded (via cloud-init) with Terraform, Azure CLI, Docker, kubectl, Helm, and Node.js — see `docs/deployment_phases/phase-02b-management-vm.md` for the full list and how it's provisioned.
 
 | | Installs | Used for |
 |---|---|---|
 | **Local machine** (this doc) | Azure CLI, Terraform, Git, an SSH client | Bootstrapping the Terraform state backend, applying Phases 1/2/2b, then SSHing to the VM |
-| **Management VM** (`docs/phases/phase-02b-management-vm.md`) | Azure CLI, Terraform, Docker, kubectl, Helm, Node.js — all via cloud-init at boot | Every phase from 3 onward: AKS, databases, messaging, CI/CD, monitoring, security |
+| **Management VM** (`docs/deployment_phases/phase-02b-management-vm.md`) | Azure CLI, Terraform, Docker, kubectl, Helm, Node.js — all via cloud-init at boot | Every phase from 3 onward: AKS, databases, messaging, CI/CD, monitoring, security |
 
 ## 1. Install local bootstrap tooling
 
@@ -24,7 +24,7 @@ That creates one chicken-and-egg problem: the VM can't create itself. So your **
 
 Restart your terminal after installing so `PATH` updates take effect.
 
-Node.js is optional locally — install it (`winget install OpenJS.NodeJS.LTS`) only if you want to run the demo services (`services/*`) directly on your laptop before pushing; it's unnecessary for the infrastructure work below.
+Node.js is optional locally — install it (`winget install OpenJS.NodeJS.LTS`) only if you want to run the demo services (`Application_services/*`) directly on your laptop before pushing; it's unnecessary for the infrastructure work below.
 
 ## 2. Generate an SSH key pair (for the management VM)
 
@@ -106,7 +106,7 @@ PS C:\Users\Zaryab>
 
 
 
-Keep a note of your **Subscription ID** and **Tenant ID** (from `az account show`) — Terraform's provider block needs them (see `docs/phases/phase-01-identity.md`).
+Keep a note of your **Subscription ID** and **Tenant ID** (from `az account show`) — Terraform's provider block needs them (see `docs/deployment_phases/phase-01-identity.md`).
 
 Also find your current public IP now — you'll need it as `admin_source_cidr` for the management VM's NSG (Phase 2b), so SSH is locked to just you:
 
@@ -129,7 +129,7 @@ It creates:
 - Storage account `stecommercetfstate<random-suffix>` (Standard_LRS, TLS1.2 minimum)
 - Blob container `tfstate`
 
-It prints the storage account name at the end — copy it into `terraform/environments/prod/backend.tf` (or pass via `-backend-config` at `terraform init`, see `docs/phases/phase-01-identity.md`).
+It prints the storage account name at the end — copy it into `terraform/environments/prod/backend.tf` (or pass via `-backend-config` at `terraform init`, see `docs/deployment_phases/phase-01-identity.md`).
 
 **Option B — Azure Portal**, if you'd rather see it happen by hand:
 

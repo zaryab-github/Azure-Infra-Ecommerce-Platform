@@ -17,7 +17,7 @@ Every subnet in this project has its own NSG, and every one of them ends with an
 
 ## Where it's wired in
 
-`terraform/modules/network/main.tf` — four `azurerm_network_security_group` resources plus their `azurerm_subnet_network_security_group_association` bindings. See [`docs/phases/phase-02-networking.md`](../phases/phase-02-networking.md) for the full rule tables and Portal equivalent.
+`terraform/modules/network/main.tf` — four `azurerm_network_security_group` resources plus their `azurerm_subnet_network_security_group_association` bindings. See [`docs/deployment_phases/phase-02-networking.md`](../deployment_phases/phase-02-networking.md) for the full rule tables and Portal equivalent.
 
 ## Why `snet-mgmt`'s rule matters most
 

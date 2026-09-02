@@ -6,7 +6,7 @@
 # VM carries a system-assigned managed identity with Contributor on the
 # resource group, so `az login --identity` on the box gives it everything it
 # needs without ever copying the Terraform service-principal secret onto it.
-# See docs/phase-02b-management-vm.md for the full walkthrough and rationale.
+# See docs/deployment_phases/phase-02b-management-vm.md for the full walkthrough and rationale.
 
 resource "azurerm_public_ip" "mgmt" {
   name                = "pip-${var.project_name}-mgmt-${var.environment}"

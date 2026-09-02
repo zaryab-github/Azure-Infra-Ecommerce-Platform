@@ -3,8 +3,8 @@
 # One VNet, four subnets (aks / appgw / data / mgmt), an NSG per subnet with a
 # baseline (not wide-open) rule set, a route table for the AKS subnet, and a
 # NAT Gateway so AKS egress traffic doesn't need a public IP per node.
-# See docs/phase-02-networking.md for the CIDR plan and the Portal walkthrough,
-# and docs/phase-02b-management-vm.md for how snet-mgmt is used.
+# See docs/deployment_phases/phase-02-networking.md for the CIDR plan and the Portal walkthrough,
+# and docs/deployment_phases/phase-02b-management-vm.md for how snet-mgmt is used.
 
 resource "azurerm_virtual_network" "main" {
   name                = "vnet-${var.project_name}-${var.environment}"

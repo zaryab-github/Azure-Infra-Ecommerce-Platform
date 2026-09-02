@@ -15,7 +15,7 @@ Every resource that needs to talk privately to another resource in this project 
 | `snet-data` | `10.0.17.0/24` | Private endpoints for SQL/Redis/Key Vault (Phases 6/9) |
 | `snet-mgmt` | `10.0.18.0/24` | The management VM, isolated from every workload subnet |
 
-Full CIDR sizing rationale: [`docs/phases/phase-02-networking.md`](../phases/phase-02-networking.md).
+Full CIDR sizing rationale: [`docs/deployment_phases/phase-02-networking.md`](../deployment_phases/phase-02-networking.md).
 
 ## Where it's wired in
 
