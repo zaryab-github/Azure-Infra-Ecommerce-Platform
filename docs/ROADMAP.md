@@ -7,7 +7,7 @@ Condensed from `Azure_Ecommerce_Platform_Roadmap.pdf`. This file is the durable 
 | 1 | Identity | ✅ Done | Resource Group, Entra ID app registration + service principal, managed identity, RBAC |
 | 2 | Networking | ✅ Done | VNet, subnets (aks/appgw/data/mgmt), NSGs, route table, public IP, NAT gateway |
 | 2b | Management VM *(custom addition, not in the original PDF)* | ✅ Done | A dedicated admin/jump VM in `snet-mgmt`, isolated from workload subnets. From here on, Terraform/kubectl/docker/az commands run from this VM, not your laptop |
-| 3 | Infrastructure as Code | 🔄 Ongoing | Terraform module structure (`network`, `aks`, `sql`, `monitoring`, `keyvault`, `acr`) — no portal clicks after subscription setup |
+| 3 | Infrastructure as Code | ✅ Done | Terraform module structure (`network`, `aks`, `sql`, `monitoring`, `keyvault`, `acr`) — no portal clicks after subscription setup |
 | 4 | Azure Container Registry | ⬜ Not started | ACR (Basic), build/push the 3 service images |
 | 5 | AKS | ⬜ Not started | AKS cluster, node pool, ingress controller, HPA, ConfigMaps/Secrets, PVs |
 | 6 | Databases | ⬜ Not started | Azure SQL — `users`, `orders`, `products` tables; Cosmos DB later/optional |

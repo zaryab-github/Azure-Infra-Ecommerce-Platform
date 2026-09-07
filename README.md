@@ -26,7 +26,8 @@ Internet
 | 1 — Identity | ✅ Done |
 | 2 — Networking | ✅ Done |
 | 2b — Management VM *(custom addition)* | ✅ Done |
-| 3–13 | ⬜ Not started |
+| 3 — Infrastructure as Code | ✅ Done |
+| 4–13 | ⬜ Not started |
 
 Full table with what each phase builds: [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
