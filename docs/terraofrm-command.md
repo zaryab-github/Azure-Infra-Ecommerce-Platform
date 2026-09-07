@@ -32,3 +32,15 @@ terraform -chdir=terraform/environments/prod destroy \
   -target=module.network.azurerm_public_ip.nat
 
 
+
+### Destory the entire module - Example
+
+terraform -chdir=terraform/environments/prod destroy \
+  -target=module.management_vm
+
+terraform -chdir=terraform/environments/prod destroy \
+  -target=module.network
+
+terraform -chdir=terraform/environments/prod destroy \
+  -target=module.identity
+
