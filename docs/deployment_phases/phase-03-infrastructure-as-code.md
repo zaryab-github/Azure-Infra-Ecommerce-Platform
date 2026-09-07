@@ -44,6 +44,14 @@ A single environment (`prod`) is deliberate at this project's scale — see the 
 
 ## Workflow (what "no Portal clicks" means day to day)
 
+- Reinitialized the terraform backend:
+
+terraform -chdir=terraform/environments/prod init -reconfigure \
+  -backend-config="resource_group_name=rg-tfstate" \
+  -backend-config="storage_account_name=stecommercetfstate1" \
+  -backend-config="container_name=tfstate" \
+  -backend-config="key=prod.terraform.tfstate"
+
 ```bash
 terraform -chdir=terraform/environments/prod fmt          # normalize formatting before every commit
 terraform -chdir=terraform/environments/prod validate      # syntax/type check, no Azure calls needed
