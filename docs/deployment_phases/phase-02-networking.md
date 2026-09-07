@@ -41,7 +41,7 @@ Continuing from Phase 1 (same `terraform/environments/prod` working directory, a
 Set `admin_source_cidr` in your `terraform.tfvars` first (your IP from `curl -s ifconfig.me`, as `/32`) — the network module's `snet-mgmt` NSG requires it even though the VM itself isn't created until Phase 2b.
 
 ```bash
-terraform -chdir=terraform/environments/prod plan -target=module.identity -target=module.network
+terraform -chdir="terraform/environments/prod" plan "-target=module.identity" "-target=module.network"
 terraform -chdir=terraform/environments/prod apply -target=module.identity -target=module.network
 ```
 
