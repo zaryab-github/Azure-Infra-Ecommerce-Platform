@@ -38,6 +38,11 @@ terraform -chdir=terraform/environments/prod destroy \
 terraform -chdir=terraform/environments/prod destroy \
   -target=module.management_vm
 
+# or more speecific resource in module
+terraform -chdir=terraform/environments/prod destroy \
+  -target=module.network.azurerm_virtual_network.main
+
+
 terraform -chdir=terraform/environments/prod destroy \
   -target=module.network
 
