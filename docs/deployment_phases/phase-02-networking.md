@@ -69,6 +69,8 @@ All inside `rg-ecommerce-prod` from Phase 1.
    - `snet-mgmt`, address range `10.0.18.0/24`
 
 3. **NSGs**: **+ Create a resource** → **Network security group**, create `nsg-ecommerce-aks-prod`, `nsg-ecommerce-appgw-prod`, `nsg-ecommerce-data-prod`, `nsg-ecommerce-mgmt-prod` (same region/RG). For each, open **Inbound security rules** → **+ Add** and enter the rules from the table above (source/destination, port ranges, priority, action) — for `nsg-ecommerce-mgmt-prod`, the one rule you need now is **Allow TCP/22 from your IP** (source: **IP Addresses**, your `/32`). Then, on each subnet's **Overview**, use **Associate ▸ Network security group** to attach the matching NSG.
+      ### By default we have default rule that allow the full communication between subnets of virtual network that it attached. Unless you specifically create DENY RUle with high priority.
+
 
 4. **Route table**: **+ Create a resource** → **Route table** → name `rt-ecommerce-aks-prod` → create, then on `snet-aks` → **Route table** → associate it.
 
@@ -78,6 +80,39 @@ All inside `rg-ecommerce-prod` from Phase 1.
    - On the NAT Gateway's **Subnets** blade, associate `snet-aks`.
 
 ---
+
+VNet: vnet-ecommerce-prod
+Address Space: 10.0.0.0/16
+│
+├── snet-aks: 10.0.0.0/20
+│   │
+│   ├── NSG: nsg-ecommerce-aks-prod
+│   │      └── Default AllowVNetInBound/OutBound
+│   │
+│   ├── Route Table: rt-ecommerce-aks-prod
+│   │
+│   ├── NAT Gateway: nat-ecommerce-prod
+│   │      └── Public IP: pip-ecommerce-nat-prod
+│   │
+│   └── AKS Nodes / Pods
+│
+├── snet-appgw: 10.0.16.0/24
+│   │
+│   ├── NSG: nsg-ecommerce-appgw-prod
+│   └── Application Gateway
+│
+├── snet-data: 10.0.17.0/24
+│   │
+│   ├── NSG: nsg-ecommerce-data-prod
+│   └── DB / Redis / MongoDB / etc.
+│
+└── snet-mgmt: 10.0.18.0/24
+    │
+    ├── NSG: nsg-ecommerce-mgmt-prod
+    └── Management VMs
+    
+
+
 
 ## Verification
 
