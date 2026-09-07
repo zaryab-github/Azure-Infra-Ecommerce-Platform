@@ -23,6 +23,12 @@ terraform -chdir=terraform/environments/prod apply         # apply
 
 
 
+### First: see all Terraform resources
+This is the command I recommend you use before targeting anything: Then you can target exactly the resource you want.
+
+    terraform -chdir=terraform/environments/prod state list
+
+
 ### Deleting the NAT Gateway (extended pause only)
 
 terraform -chdir=terraform/environments/prod destroy \
@@ -35,17 +41,19 @@ terraform -chdir=terraform/environments/prod destroy \
 
 ### Destory the entire module - Example
 
-terraform -chdir=terraform/environments/prod destroy \
-  -target=module.management_vm
+    terraform -chdir=terraform/environments/prod destroy \
+    -target=module.management_vm
 
-# or more speecific resource in module
-terraform -chdir=terraform/environments/prod destroy \
-  -target=module.network.azurerm_virtual_network.main
+# Destroy more speecific resource in module
+    terraform destroy -target=RESOURCE_ADDRESS
+    (OR)
+    terraform -chdir=terraform/environments/prod destroy \
+    -target=module.network.azurerm_virtual_network.main
 
 
-terraform -chdir=terraform/environments/prod destroy \
-  -target=module.network
+    terraform -chdir=terraform/environments/prod destroy \
+    -target=module.network
 
-terraform -chdir=terraform/environments/prod destroy \
-  -target=module.identity
+    terraform -chdir=terraform/environments/prod destroy \
+    -target=module.identity
 
