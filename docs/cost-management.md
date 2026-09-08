@@ -25,14 +25,25 @@ az vm start --name vm-ecommerce-mgmt-prod --resource-group rg-ecommerce-prod
 
 `deallocate` (not `stop`) is what actually stops compute billing — `az vm stop` alone leaves you paying. Its Static Standard public IP is retained and reattached automatically on start, so the SSH command / IP you've saved doesn't change.
 
-## What's billed today (Phases 1, 2, 2b)
+## What's billed, full project (Phases 1–13)
 
 | Resource | Can it be stopped? | Action to save cost | Approx. cost if left running |
 |---|---|---|---|
-| Management VM (`Standard_B2s`) | Yes — deallocate | `./scripts/stop-management-vm.ps1` (see above) | ~$30–35/mo if run 24/7; **$0 while deallocated** |
+| Management VM (`Standard_B2s`) | Yes — deallocate | `./scripts/stop-management-vm.ps1` | ~$30–35/mo if run 24/7; **$0 while deallocated** |
+| AKS cluster (`Standard_B2s`, 1 node, Free SKU tier) | Yes — `az aks stop` | `az aks stop --name aks-ecommerce-prod --resource-group rg-ecommerce-prod` / `az aks start ...` | ~$25–40/mo if run 24/7; **$0 while stopped** (control plane is already free) |
+| Azure SQL (Serverless, auto-pause 60 min) | Self-pauses | Nothing to do — it pauses on idle automatically | Near-$0 when idle; ~$5–15/mo under light active use |
+| Application Gateway (WAF_v2, autoscale min 0) | No hard stop, but scales to near-zero capacity units when idle | Delete via `terraform destroy -target=module.appgateway` for an extended pause | ~$0.36/hr base + usage — the single most expensive *always-on* piece once Phase 12 is deployed |
 | NAT Gateway | No | Delete via Terraform, recreate next session (below) | ~$32/mo (hourly) + data processing |
-| Standard Public IPs (NAT + VM, 2 total) | No | Delete via Terraform along with their owning resource | ~$3.50/mo each |
-| Resource Group, VNet/subnets, NSGs, Route Table, Entra ID app/SP, Managed Identity | N/A | Free — leave these running always | $0 |
+| Standard Public IPs (NAT + VM + App Gateway, 3 total) | No | Delete via Terraform along with their owning resource | ~$3.50/mo each |
+| ACR (Basic) | No | Effectively free — leave running | ~$5/mo flat |
+| Service Bus (Basic) | No | Effectively free — leave running | Low, usage-based |
+| Storage Account | No | Effectively free at this scale — leave running | <$2/mo |
+| Key Vault | No | Effectively free at this scale — leave running | Negligible |
+| Log Analytics + Application Insights | No | Keep ingestion low (this project's traffic is tiny) | Usage-based, low here |
+| Defender for Cloud | N/A | Kept at **Free** tier by default (`defender_tier` var) | $0 at Free tier |
+| Resource Group, VNet/subnets, NSGs, Route Table, Entra ID app/SP, Managed Identity, Azure Policy assignments | N/A | Free — leave these running always | $0 |
+
+Not built in this project: Azure Cache for Redis (listed as optional in the roadmap's architecture diagram — no `terraform/modules/redis` exists; add one following the same pattern as `sql`/`servicebus` if you want it).
 
 Practical guidance: for a normal working session, just stop the VM (`az vm deallocate`) at the end and start it again next time — that alone removes the overwhelming majority of the daily cost. Only bother deleting the NAT Gateway/Public IPs if you're pausing the project for an extended stretch (a week+), since they're a much smaller cost and deleting/recreating them means also re-running Terraform for the network module.
 
@@ -54,18 +65,9 @@ terraform -chdir=terraform/environments/prod apply
 
 Terraform reconciles state and adds back only what's missing.
 
-## What gets added here as later phases land
+## Recommended daily routine
 
-This table grows as each phase is built — check back after each one:
-
-| Phase | Resource | Stop or delete? |
-|---|---|---|
-| 5 — AKS | AKS cluster | Stop (`az aks stop` / `az aks start`) between sessions; full delete only for an extended pause |
-| 6 — Databases | Azure SQL | Serverless tier auto-pauses on idle at near-zero cost — prefer that tier specifically so this needs no manual action; otherwise delete/recreate (data loss risk — will call out an export step if used) |
-| 6 — Databases | Azure Cache for Redis | No stop — delete/recreate (no persistent data by default in this project's use) |
-| 4 — ACR | Container Registry | Effectively free at Basic tier — leave running |
-| 8 — Storage | Storage Account | Effectively free at this project's scale — leave running |
-| 9 — Secrets | Key Vault | Effectively free at this project's scale — leave running |
+For a normal working session: `./scripts/start-management-vm.ps1` → `az aks start ...` at the start, work, then `az aks stop ...` → `./scripts/stop-management-vm.ps1` at the end. That covers the two resources with real, meaningful, stoppable cost. Everything else in the table above is either free, auto-pausing, or cheap enough to leave running continuously without meaningfully denting a $200 credit.
 
 ## General pattern for any future costly resource
 

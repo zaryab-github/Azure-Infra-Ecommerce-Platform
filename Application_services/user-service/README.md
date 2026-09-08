@@ -7,14 +7,13 @@ See [`docs/services.md`](../../docs/services.md) for how this fits with `product
 ## Current scope
 
 - `GET /health` — liveness/readiness check
-- `GET /api/users` — static in-memory list
-- `GET /api/users/:id`
+- `GET /api/users` / `GET /api/users/:id` — reads from Azure SQL (`Users` table, seeded on first startup) when `SQL_SERVER` is set; otherwise falls back to a static in-memory list, so it still runs standalone with no Azure dependency
+- Application Insights auto-instrumentation when `APPLICATIONINSIGHTS_CONNECTION_STRING` is set (Phase 11)
 
-## Deferred to later phases
+## Deferred / out of scope
 
-- Azure SQL persistence (Phase 6) instead of the in-memory array
-- Reading its DB connection string from Key Vault via managed identity (Phase 9), not an env var with a literal secret
-- Publishing/consuming Service Bus messages if needed (Phase 7)
+- Full CRUD (create/update/delete users) — this project only needs to prove read connectivity, not real user management
+- Auth/JWT — no login flow exists; the `jwt-secret` Key Vault entry (Phase 9) is reserved for if that's ever added
 
 ## Run locally
 

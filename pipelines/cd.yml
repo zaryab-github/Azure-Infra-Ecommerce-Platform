@@ -1,0 +1,94 @@
+# Phase 10 — CD
+#
+# Manual trigger (or after ci.yml, with an environment approval gate — set
+# that up in the Azure DevOps environment settings, not in this file).
+# terraform plan/apply, then `kubectl apply` the manifests with the just-built
+# image tags substituted in, then a smoke test against the ingress.
+#
+# Prerequisites (see docs/deployment_phases/phase-10-cicd.md):
+#   - A Service Connection named "azure-service-connection" (ARM type,
+#     workload identity federation preferred over a stored secret)
+#   - Pipeline variables: tfStateResourceGroup, tfStateStorageAccount, acrLoginServer
+
+trigger: none
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  azureServiceConnection: "azure-service-connection"
+
+stages:
+  - stage: TerraformApply
+    jobs:
+      - deployment: Infrastructure
+        environment: "production"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: TerraformInstaller@1
+                  inputs:
+                    terraformVersion: "1.7.5"
+
+                - task: AzureCLI@2
+                  displayName: "terraform init/plan/apply"
+                  inputs:
+                    azureSubscription: $(azureServiceConnection)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      cd terraform/environments/prod
+                      terraform init \
+                        -backend-config="resource_group_name=$(tfStateResourceGroup)" \
+                        -backend-config="storage_account_name=$(tfStateStorageAccount)" \
+                        -backend-config="container_name=tfstate" \
+                        -backend-config="key=prod.terraform.tfstate"
+                      terraform plan -out=tfplan
+                      terraform apply -auto-approve tfplan
+
+  - stage: DeployToAKS
+    dependsOn: TerraformApply
+    jobs:
+      - deployment: Kubernetes
+        environment: "production"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureCLI@2
+                  displayName: "az aks get-credentials"
+                  inputs:
+                    azureSubscription: $(azureServiceConnection)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      az aks get-credentials --name aks-ecommerce-prod --resource-group rg-ecommerce-prod --overwrite-existing
+
+                - script: |
+                    sed -i "s#<ACR_LOGIN_SERVER>#$(acrLoginServer)#g" kubernetes/deployments/*.yaml
+                    for tag in user-service:$(Build.SourceVersion) product-service:$(Build.SourceVersion) order-service:$(Build.SourceVersion); do
+                      svc=$(echo $tag | cut -d: -f1)
+                      sed -i "s#${svc}:latest#${tag}#g" kubernetes/deployments/${svc}.yaml
+                    done
+                    kubectl apply -f kubernetes/namespace.yaml
+                    kubectl apply -f kubernetes/serviceaccount.yaml
+                    kubectl apply -f kubernetes/secrets/ || true
+                    kubectl apply -f kubernetes/deployments/
+                    kubectl apply -f kubernetes/services/
+                    kubectl apply -f kubernetes/ingress/
+                    kubectl apply -f kubernetes/hpa/
+                    kubectl apply -f kubernetes/security/ || true
+                  displayName: "kubectl apply (with image tags substituted)"
+
+                - script: |
+                    kubectl rollout status deployment/user-service -n ecommerce --timeout=180s
+                    kubectl rollout status deployment/product-service -n ecommerce --timeout=180s
+                    kubectl rollout status deployment/order-service -n ecommerce --timeout=180s
+                  displayName: "Wait for rollout"
+
+                - script: |
+                    INGRESS_IP=$(kubectl get svc -n app-routing-system nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+                    curl -f http://$INGRESS_IP/api/users
+                    curl -f http://$INGRESS_IP/api/products
+                  displayName: "Smoke test (ingress only routes /api/* — /health is checked via kubectl probes, not externally)"

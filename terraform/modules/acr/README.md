@@ -1,5 +1,5 @@
-# acr module — not yet implemented
+# acr module
 
-Built in **Phase 4 — Azure Container Registry** (see [`docs/ROADMAP.md`](../../../docs/ROADMAP.md)).
+Built in **Phase 4 — Azure Container Registry** (see [`docs/ROADMAP.md`](../../../docs/ROADMAP.md), [`docs/deployment_phases/phase-04-acr.md`](../../../docs/deployment_phases/phase-04-acr.md)).
 
-Will provision: Azure Container Registry (Basic tier) and an AcrPull role assignment for the AKS managed identity, so the cluster can pull the `user-service` / `product-service` / `order-service` images built from [`Application_services/`](../../../Application_services).
+Provisions: Azure Container Registry (Basic tier, `admin_enabled = false`). The AcrPull role assignment for AKS's kubelet identity lives in the **aks** module instead, since that identity doesn't exist until Phase 5.

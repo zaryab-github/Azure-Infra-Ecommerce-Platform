@@ -79,6 +79,51 @@ variable "mgmt_vm_size" {
   default     = "Standard_B2s"
 }
 
+# --- Phase 5 — AKS ------------------------------------------------------
+
+variable "aks_node_vm_size" {
+  type    = string
+  default = "Standard_B2s"
+}
+
+variable "aks_node_count" {
+  type    = number
+  default = 1
+}
+
+# --- Phase 11 — Monitoring -------------------------------------------------
+
+variable "enable_monitoring" {
+  description = "Gates the monitoring module. Kept true by default (Phase 11 is built), but exists so the AKS module's optional log_analytics_workspace_id reference never hard-fails."
+  type        = bool
+  default     = true
+}
+
+variable "alert_email" {
+  description = "Email address Azure Monitor alerts fire to. No default — set it deliberately in terraform.tfvars."
+  type        = string
+}
+
+# --- Phase 12 — Security ----------------------------------------------------
+
+variable "defender_tier" {
+  description = "\"Free\" or \"Standard\" for Microsoft Defender for Cloud. Free by default — see docs/cost-management.md before switching."
+  type        = string
+  default     = "Free"
+}
+
+variable "deploy_appgateway" {
+  description = "Set true only once AKS + its ingress controller are running and you have a real appgw_backend_address — see docs/deployment_phases/phase-12-security.md."
+  type        = bool
+  default     = false
+}
+
+variable "appgw_backend_address" {
+  description = "Public IP of the AKS ingress controller's LoadBalancer Service. Get it with: kubectl get svc -n app-routing-system nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}'"
+  type        = string
+  default     = "0.0.0.0"
+}
+
 variable "tags" {
   description = "Common tags applied to all resources."
   type        = map(string)

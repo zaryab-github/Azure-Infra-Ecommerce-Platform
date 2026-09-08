@@ -23,3 +23,20 @@ mgmt_admin_username = "azureadmin"
 # Contents of your public key file, e.g.: Get-Content ~/.ssh/id_ed25519.pub
 mgmt_ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... you@yourmachine"
 mgmt_vm_size         = "Standard_B2s"
+
+# Phase 5 — AKS
+aks_node_vm_size = "Standard_B2s"
+aks_node_count   = 1
+
+# Phase 11 — Monitoring
+enable_monitoring = true
+alert_email       = "you@example.com"
+
+# Phase 12 — Security
+defender_tier = "Free"
+
+# Leave these two as-is until AKS + its ingress controller are actually
+# running — see docs/deployment_phases/phase-12-security.md before flipping
+# deploy_appgateway to true.
+deploy_appgateway      = false
+appgw_backend_address = "0.0.0.0"

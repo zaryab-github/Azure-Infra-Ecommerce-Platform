@@ -1,9 +1,15 @@
-# Azure Container Registry — not yet implemented
+# Azure Container Registry
 
-Lands in **Phase 4** (see [`docs/ROADMAP.md`](../ROADMAP.md), Terraform module `terraform/modules/acr`).
+Built in **Phase 4** (`terraform/modules/acr`). See [`docs/deployment_phases/phase-04-acr.md`](../deployment_phases/phase-04-acr.md) for setup steps.
 
-**What it will be**: a private Docker registry for this project's three service images, so AKS pulls from a registry you control rather than a public one.
+## What it is
 
-**Why it's needed here**: AKS needs somewhere to pull `user-service`/`product-service`/`order-service` images from. A private registry with `AcrPull` granted narrowly to AKS's managed identity (see [managed-identity.md](managed-identity.md) and [azure-rbac.md](azure-rbac.md)) demonstrates registry-level access control, not just "make the images public."
+A private Docker registry — `acrecommerceprod`, Basic SKU, `admin_enabled = false`. AKS pulls the three service images from it rather than a public registry.
 
-This file will be filled in with the actual implementation notes once Phase 4 is built.
+## Why this project uses it
+
+Demonstrates registry-level access control, not just "make the images public": pulls are authorized via `AcrPull` granted to AKS's kubelet identity (an RBAC role assignment living in the **aks** module, Phase 5, since that identity doesn't exist until the cluster is created) — see [azure-rbac.md](azure-rbac.md) and [managed-identity.md](managed-identity.md). No admin username/password anywhere.
+
+## Where it's wired in
+
+`terraform/modules/acr/main.tf` → `azurerm_container_registry.main`. Consumed by `terraform/modules/aks/main.tf` (`azurerm_role_assignment.aks_acr_pull`) and pushed to from the management VM (`az acr login` + `docker push`, Phase 4) or from `pipelines/ci.yml` (Phase 10).

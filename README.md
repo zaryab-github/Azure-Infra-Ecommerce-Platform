@@ -27,7 +27,18 @@ Internet
 | 2 — Networking | ✅ Done |
 | 2b — Management VM *(custom addition)* | ✅ Done |
 | 3 — Infrastructure as Code | ✅ Done |
-| 4–13 | ⬜ Not started |
+| 4 — Azure Container Registry | ✅ Done |
+| 5 — AKS | ✅ Done |
+| 6 — Databases | ✅ Done |
+| 7 — Messaging | ✅ Done |
+| 8 — Storage | ✅ Done |
+| 9 — Secrets | ✅ Done |
+| 10 — CI/CD | ✅ Done |
+| 11 — Monitoring | ✅ Done |
+| 12 — Security | ✅ Done |
+| 13 — GitOps *(optional)* | ✅ Done (guidance) |
+
+"Done" = code, manifests, pipelines, and docs are complete and `terraform validate` passes — not that it's running in your subscription. See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the apply-order caveat.
 
 Full table with what each phase builds: [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
@@ -39,15 +50,15 @@ Phases 1 and 2 run from your local machine. Right after, **Phase 2b provisions a
 
 ```
 docs/
-  phases/              step-by-step instructions, one file per phase (Terraform path + Azure Portal path)
+  deployment_phases/   step-by-step instructions, one file per phase (Terraform path + Azure Portal path)
   azure-services/      what each Azure service is, why it's used here, and where it's wired in — independent of the phase how-tos
   cost-management.md   consolidated stop/delete/recreate reference for every billed resource
   services.md          how the 3 demo services fit together and communicate
 terraform/
   environments/prod/   root module — wires everything together for the prod environment
-  modules/             one module per concern (identity, network, management-vm, aks, sql, keyvault, acr, servicebus, storage, monitoring)
-kubernetes/            raw manifests (ingress, deployments, services, hpa) — populated from Phase 5
-pipelines/             Azure Pipelines YAML — populated from Phase 10
+  modules/             one module per concern (identity, network, management-vm, acr, aks, sql, servicebus, storage, keyvault, monitoring, appgateway, security)
+kubernetes/            manifests (namespace, deployments, services, ingress, hpa, secrets, security)
+pipelines/             Azure Pipelines YAML — ci.yml + cd.yml
 Application_services/ the 3 demo microservices (Node.js + Express)
 helm/                  optional packaging layer, for the optional GitOps phase
 scripts/               setup/bootstrap/cost-control helpers

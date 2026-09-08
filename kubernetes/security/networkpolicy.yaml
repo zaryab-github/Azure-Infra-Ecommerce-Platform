@@ -1,0 +1,73 @@
+# Phase 12 — default-deny within the ecommerce namespace, then explicit
+# allows: ingress from the Web Application Routing controller's namespace
+# into each service, DNS + HTTPS egress for every pod (Azure AD tokens, Key
+# Vault, SQL, Service Bus, ACR all need outbound HTTPS). Requires the AKS
+# module's network_policy = "azure" (already set in Phase 5).
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: ecommerce
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-and-https-egress
+  namespace: ecommerce
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to: []
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-from-app-routing
+  namespace: ecommerce
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: app-routing-system
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-order-to-product-servicebus-path
+  namespace: ecommerce
+spec:
+  # product-service's Service Bus receiver doesn't need inbound from
+  # order-service directly (they talk via the queue, not pod-to-pod) — this
+  # policy is a placeholder for any future direct service-to-service calls;
+  # currently a no-op allow with no matching traffic, kept for documentation.
+  podSelector:
+    matchLabels:
+      app: product-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: order-service

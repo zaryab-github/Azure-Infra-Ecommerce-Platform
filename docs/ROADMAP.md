@@ -8,16 +8,18 @@ Condensed from `Azure_Ecommerce_Platform_Roadmap.pdf`. This file is the durable 
 | 2 | Networking | ✅ Done | VNet, subnets (aks/appgw/data/mgmt), NSGs, route table, public IP, NAT gateway |
 | 2b | Management VM *(custom addition, not in the original PDF)* | ✅ Done | A dedicated admin/jump VM in `snet-mgmt`, isolated from workload subnets. From here on, Terraform/kubectl/docker/az commands run from this VM, not your laptop |
 | 3 | Infrastructure as Code | ✅ Done | Terraform module structure (`network`, `aks`, `sql`, `monitoring`, `keyvault`, `acr`) — no portal clicks after subscription setup |
-| 4 | Azure Container Registry | ⬜ Not started | ACR (Basic), build/push the 3 service images |
-| 5 | AKS | ⬜ Not started | AKS cluster, node pool, ingress controller, HPA, ConfigMaps/Secrets, PVs |
-| 6 | Databases | ⬜ Not started | Azure SQL — `users`, `orders`, `products` tables; Cosmos DB later/optional |
-| 7 | Messaging | ⬜ Not started | Service Bus — order created → queue → order processor → inventory update |
-| 8 | Storage | ⬜ Not started | Storage Account — product images, invoices, log exports |
-| 9 | Secrets | ⬜ Not started | Key Vault — DB password, JWT secret, storage key, API keys; AKS reads via managed identity |
-| 10 | CI/CD | ⬜ Not started | Azure DevOps Pipelines: build → test → docker build → push ACR → terraform plan/apply → deploy AKS → smoke test |
-| 11 | Monitoring | ⬜ Not started | Azure Monitor, Log Analytics, Application Insights, alerts |
-| 12 | Security | ⬜ Not started | Network policies, Azure Policy, RBAC hardening, private endpoints, WAF, Defender for Cloud trial |
-| 13 | GitOps (optional) | ⬜ Not started | FluxCD/ArgoCD — Git becomes the source of truth instead of direct `kubectl`/pipeline deploys |
+| 4 | Azure Container Registry | ✅ Done | ACR (Basic), build/push the 3 service images |
+| 5 | AKS | ✅ Done | AKS cluster, node pool, Web App Routing ingress, HPA, workload identity, Key Vault CSI add-on |
+| 6 | Databases | ✅ Done | Azure SQL Serverless (private endpoint) — `Users`, `Products`, `Orders` tables, created/seeded by each service on startup |
+| 7 | Messaging | ✅ Done | Service Bus — `order-service` publishes `OrderCreated` → `orders` queue → `product-service`'s background receiver decrements stock |
+| 8 | Storage | ✅ Done | Storage Account — public `product-images` container (linked from product responses), private `invoices`/`logs` |
+| 9 | Secrets | ✅ Done | Key Vault (RBAC) — SQL password, connection strings, JWT secret; AKS reads via the CSI Secrets Store provider, no SDK code in the services |
+| 10 | CI/CD | ✅ Done | `pipelines/ci.yml` + `pipelines/cd.yml` — build → test (if present) → docker build → push ACR → terraform plan/apply → deploy AKS → smoke test. Portal-driven setup (Azure DevOps isn't an ARM resource) |
+| 11 | Monitoring | ✅ Done | Log Analytics, Application Insights, diagnostic settings, 2 baseline alerts |
+| 12 | Security | ✅ Done | Application Gateway + WAF (two-step deploy), Kubernetes NetworkPolicies, Azure Policy guardrails, Defender for Cloud (Free tier) |
+| 13 | GitOps (optional) | ✅ Done (guidance) | FluxCD bootstrap instructions — CLI-driven, not a Terraform module (see the phase doc for why) |
+
+"Done" means the Terraform/Kubernetes/pipeline code and docs for that phase are complete and `terraform validate` passes — it does **not** mean the resources are actually running in your subscription. Nothing applies itself; each phase doc's Track A walks through the specific `-target=module.X` apply for that phase. Phases 5, 9, and 12 in particular depend on state from earlier phases already being applied (AKS needs ACR; Key Vault needs AKS's CSI identity + the SQL/Service Bus outputs; App Gateway needs AKS's ingress IP) — apply in phase order.
 
 ## Reference architecture
 

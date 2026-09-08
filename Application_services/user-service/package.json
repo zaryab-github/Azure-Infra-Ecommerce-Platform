@@ -9,6 +9,8 @@
     "dev": "node --watch src/index.js"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "mssql": "^11.0.1",
+    "applicationinsights": "^2.9.5"
   }
 }

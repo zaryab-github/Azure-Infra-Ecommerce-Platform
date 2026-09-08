@@ -1,0 +1,66 @@
+# Replace <ACR_LOGIN_SERVER> with the acr_login_server Terraform output
+# before applying — see docs/deployment_phases/phase-05-aks.md.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: ecommerce
+  labels:
+    app: user-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: ecommerce-workload-sa
+      containers:
+        - name: user-service
+          image: <ACR_LOGIN_SERVER>/user-service:latest
+          ports:
+            - containerPort: 3001
+          env:
+            - name: PORT
+              value: "3001"
+            - name: NODE_ENV
+              value: "production"
+            - name: SQL_SERVER
+              value: "<SQL_SERVER_FQDN>"
+            - name: SQL_DATABASE
+              value: "<SQL_DATABASE_NAME>"
+            - name: SQL_USER
+              value: "<SQL_ADMIN_USERNAME>"
+            - name: APPLICATIONINSIGHTS_CONNECTION_STRING
+              value: "<APP_INSIGHTS_CONNECTION_STRING>"
+          envFrom:
+            - secretRef:
+                name: app-secrets
+                optional: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 10
+            periodSeconds: 20
+      # Phase 9 adds a secrets-store CSI volume + volumeMount here, once
+      # kubernetes/secrets/secretproviderclass.yaml exists to reference —
+      # see docs/deployment_phases/phase-09-secrets.md. Deliberately absent
+      # until then so this Deployment works standalone from Phase 5 on.

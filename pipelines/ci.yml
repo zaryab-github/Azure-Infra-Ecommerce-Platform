@@ -1,0 +1,69 @@
+# Phase 10 — CI
+#
+# Triggered on push to main. For each of the 3 services: npm ci, npm test
+# (skipped gracefully via --if-present — no test suites exist yet, this
+# doesn't fake a passing one), docker build, push to ACR. Then a Terraform
+# fmt/validate check (no apply — that's cd.yml's job, and only after a
+# human approval gate).
+#
+# Prerequisites (see docs/deployment_phases/phase-10-cicd.md):
+#   - An Azure DevOps project with this repo connected
+#   - A Service Connection named "acr-service-connection" (ACR docker registry type)
+#   - Pipeline variable "acrLoginServer" set to the acr_login_server Terraform output
+
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  acrServiceConnection: "acr-service-connection"
+
+stages:
+  - stage: BuildAndPush
+    jobs:
+      - job: Services
+        strategy:
+          matrix:
+            user_service:
+              serviceName: "user-service"
+            product_service:
+              serviceName: "product-service"
+            order_service:
+              serviceName: "order-service"
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: "20.x"
+
+          - script: |
+              cd Application_services/$(serviceName)
+              npm ci
+              npm test --if-present
+            displayName: "npm ci && test ($(serviceName))"
+
+          - task: Docker@2
+            displayName: "Build and push $(serviceName)"
+            inputs:
+              containerRegistry: $(acrServiceConnection)
+              repository: $(serviceName)
+              command: buildAndPush
+              Dockerfile: "Application_services/$(serviceName)/Dockerfile"
+              buildContext: "Application_services/$(serviceName)"
+              tags: |
+                $(Build.SourceVersion)
+                latest
+
+  - stage: TerraformCheck
+    dependsOn: BuildAndPush
+    jobs:
+      - job: FmtAndValidate
+        steps:
+          - script: |
+              terraform -chdir=terraform/environments/prod fmt -check
+              terraform -chdir=terraform/environments/prod init -backend=false -input=false
+              terraform -chdir=terraform/environments/prod validate
+            displayName: "terraform fmt -check && validate"

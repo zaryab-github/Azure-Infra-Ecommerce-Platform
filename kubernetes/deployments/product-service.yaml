@@ -1,0 +1,68 @@
+# Replace <ACR_LOGIN_SERVER> with the acr_login_server Terraform output
+# before applying — see docs/deployment_phases/phase-05-aks.md.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service
+  namespace: ecommerce
+  labels:
+    app: product-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: product-service
+  template:
+    metadata:
+      labels:
+        app: product-service
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: ecommerce-workload-sa
+      containers:
+        - name: product-service
+          image: <ACR_LOGIN_SERVER>/product-service:latest
+          ports:
+            - containerPort: 3002
+          env:
+            - name: PORT
+              value: "3002"
+            - name: NODE_ENV
+              value: "production"
+            - name: SQL_SERVER
+              value: "<SQL_SERVER_FQDN>"
+            - name: SQL_DATABASE
+              value: "<SQL_DATABASE_NAME>"
+            - name: SQL_USER
+              value: "<SQL_ADMIN_USERNAME>"
+            - name: STORAGE_ACCOUNT_URL
+              value: "<STORAGE_BLOB_ENDPOINT>"
+            - name: APPLICATIONINSIGHTS_CONNECTION_STRING
+              value: "<APP_INSIGHTS_CONNECTION_STRING>"
+          envFrom:
+            - secretRef:
+                name: app-secrets
+                optional: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3002
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3002
+            initialDelaySeconds: 10
+            periodSeconds: 20
+      # Phase 9 adds a secrets-store CSI volume + volumeMount here, once
+      # kubernetes/secrets/secretproviderclass.yaml exists to reference —
+      # see docs/deployment_phases/phase-09-secrets.md. Deliberately absent
+      # until then so this Deployment works standalone from Phase 5 on.

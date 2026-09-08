@@ -7,14 +7,13 @@ See [`docs/services.md`](../../docs/services.md) for how this fits with `user-se
 ## Current scope
 
 - `GET /health` — liveness/readiness check
-- `GET /api/products` — static in-memory list
-- `GET /api/products/:id`
+- `GET /api/products` / `GET /api/products/:id` — reads from Azure SQL (`Products` table, seeded on first startup) when `SQL_SERVER` is set, else an in-memory list; each product's `imageUrl` is a plain URL into the public `product-images` Storage container when `STORAGE_ACCOUNT_URL` is set (Phase 8)
+- A background Service Bus receiver (`src/servicebus.js`) consuming the `orders` queue and decrementing stock — this is the "Inventory Service" from the roadmap's messaging diagram, folded into this service rather than a 4th standalone one (Phase 7)
+- Application Insights auto-instrumentation when `APPLICATIONINSIGHTS_CONNECTION_STRING` is set (Phase 11)
 
-## Deferred to later phases
+## Deferred / out of scope
 
-- Azure SQL persistence (Phase 6) instead of the in-memory array
-- Product images served from Azure Storage (Phase 8)
-- Consuming inventory-update messages from Service Bus, published by `order-service` (Phase 7)
+- Full CRUD, image upload — this project only needs to prove read/consume connectivity
 
 ## Run locally
 

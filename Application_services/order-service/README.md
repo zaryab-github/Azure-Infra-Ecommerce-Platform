@@ -7,13 +7,13 @@ See [`docs/services.md`](../../docs/services.md) for how this fits with `user-se
 ## Current scope
 
 - `GET /health` — liveness/readiness check
-- `GET /api/orders` — in-memory list
-- `POST /api/orders` — `{ userId, productId, quantity }`, appended to the in-memory list
+- `GET /api/orders` / `POST /api/orders` — `{ userId, productId, quantity }`, persisted to Azure SQL (`Orders` table) when `SQL_SERVER` is set, else an in-memory list
+- On creation, best-effort publishes an `OrderCreated` message to the Service Bus `orders` queue (`src/servicebus.js`) when `SERVICEBUS_CONNECTION_STRING` is set — consumed by `product-service`'s receiver (Phase 7)
+- Application Insights auto-instrumentation when `APPLICATIONINSIGHTS_CONNECTION_STRING` is set (Phase 11)
 
-## Deferred to later phases
+## Deferred / out of scope
 
-- Azure SQL persistence (Phase 6) instead of the in-memory array
-- Publishing a message to the Service Bus `orders` queue on order creation (Phase 7), consumed by an order processor that updates `product-service` inventory
+- Full order lifecycle (cancellation, payment, fulfillment) — this project only needs to prove the create → publish → consume connectivity
 
 ## Run locally
 
