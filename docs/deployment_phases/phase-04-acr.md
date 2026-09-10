@@ -28,21 +28,25 @@ terraform -chdir=terraform/environments/prod output acr_login_server
 
 ## Build and push the three images
 
-From the management VM, once `docker` and `az` are available (cloud-init already installed both):
+From the management VM, once `docker` and `az` are available (cloud-init already installed both). Note: `ACR_LOGIN_SERVER` below is a real shell variable holding the actual value — don't paste literal angle brackets into a command; bash reads `<something>` as an input redirect, not a placeholder, and fails with a confusing "No such file or directory".
 
 ```bash
-az acr login --name <acr-name>
+ACR_LOGIN_SERVER=$(az acr list --resource-group rg-ecommerce-prod --query "[0].loginServer" -o tsv)
+# or, if terraform state is initialized on this VM:
+# ACR_LOGIN_SERVER=$(terraform -chdir=terraform/environments/prod output -raw acr_login_server)
+
+az acr login --name "${ACR_LOGIN_SERVER%%.*}"
 
 for svc in user-service product-service order-service; do
-  docker build -t <acr-login-server>/$svc:latest Application_services/$svc
-  docker push <acr-login-server>/$svc:latest
+  docker build -t "$ACR_LOGIN_SERVER/$svc:latest" "Application_services/$svc"
+  docker push "$ACR_LOGIN_SERVER/$svc:latest"
 done
 ```
 
 ## Verification
 
 ```bash
-az acr repository list --name <acr-name> --output table
+az acr repository list --name "${ACR_LOGIN_SERVER%%.*}" --output table
 ```
 
 Should list `user-service`, `product-service`, `order-service` once pushed.
