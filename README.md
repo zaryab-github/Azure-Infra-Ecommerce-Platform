@@ -52,6 +52,7 @@ Phases 1 and 2 run from your local machine. Right after, **Phase 2b provisions a
 docs/
   deployment_phases/   step-by-step instructions, one file per phase (Terraform path + Azure Portal path)
   azure-services/      what each Azure service is, why it's used here, and where it's wired in — independent of the phase how-tos
+  aks/                 AKS deep-dive: cluster management, networking, RBAC/identity, storage, service mesh, logging/monitoring, policies/CRDs, troubleshooting
   cost-management.md   consolidated stop/delete/recreate reference for every billed resource
   services.md          how the 3 demo services fit together and communicate
 terraform/

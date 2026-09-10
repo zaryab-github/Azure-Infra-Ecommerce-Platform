@@ -4,6 +4,8 @@ Goal: the cluster running the three services, with an ingress controller, HPA, w
 
 > **Where this runs**: from the management VM.
 
+> For how AKS actually works once it exists — cluster management, networking, RBAC/identity, storage, service mesh, logging/monitoring, policies/CRDs, and troubleshooting — see [`docs/aks/`](../aks/README.md), a full deep-dive built alongside this phase.
+
 ## What gets created
 
 | Resource | Purpose |

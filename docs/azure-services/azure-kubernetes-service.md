@@ -21,3 +21,7 @@ The centerpiece of the whole architecture — everything before this phase exist
 ## Kubernetes-side resources
 
 `kubernetes/namespace.yaml`, `deployments/`, `services/`, `ingress/`, `hpa/` — one Deployment/Service/HPA per service, an Ingress routing by path prefix. See [`docs/services.md`](../services.md) for what runs inside them.
+
+## Everything else about running AKS itself
+
+This file covers why the Azure resource exists and how it's wired into the rest of this project's Terraform. For how AKS actually works day to day once it's running — cluster management, networking internals, RBAC/identity, storage, service mesh, logging/monitoring, policies/CRDs, and a troubleshooting runbook built from this exact project's setup — see [`docs/aks/`](../aks/README.md).
