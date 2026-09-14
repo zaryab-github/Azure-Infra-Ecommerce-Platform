@@ -27,3 +27,7 @@ Thumbs.db
 # Kubernetes local kubeconfigs
 kubeconfig
 *.kubeconfig
+
+# Kubernetes Secret manifests with real values filled in — never commit these.
+# Only the *.example.yaml templates are tracked.
+kubernetes/secrets/app-secrets.yaml
