@@ -204,15 +204,15 @@ pod/nginx-cc9466c98-5sm62      1/1     Running     0          5m24s
 pod/nginx-cc9466c98-ghq79      0/1     Pending     0          4m42s
 ```
 
-This is the Web Application Routing add-on's nginx ingress controller, created by `az aks approuting enable`. Its Deployment ships with an HPA (see below) whose **default minimum is 2 replicas** — this single-node cluster only has capacity for 1, so the second pod sat `Pending` (`Node: <none>` — no node had room), the same "old/extra pod holds a reservation it can't use" pattern covered in [`docs/aks/troubleshooting.md`](troubleshooting.md#pending-with-failedscheduling--insufficient-cpu-or-memory). The single `Running` replica was still serving traffic fine — not an outage — but the `Pending` one was permanently unschedulable on this quota, so it was worth clearing rather than leaving around.
+This is the Web Application Routing add-on's nginx ingress controller, created by `az aks approuting enable`. Its Deployment ships with an HPA (see below) whose **default minimum is 2 replicas** — this single-node cluster only has capacity for 1, so the second pod sits `Pending` (`Node: <none>` — no node has room), the same "extra pod can't get scheduled" pattern covered in [`docs/aks/troubleshooting.md`](troubleshooting.md#pending-with-failedscheduling--insufficient-cpu-or-memory). The single `Running` replica serves traffic fine — **this is not an outage**.
 
-**Fix applied**: lowered the HPA's minimum to match actual node capacity:
+**`kubectl patch`/`kubectl edit` on this HPA does not stick.** Tried directly (`kubectl patch hpa nginx -n app-routing-system --type='merge' -p '{"spec":{"minReplicas":1}}'`) — it applies, then reverts back to `minReplicas: 2` within seconds. This is because Web Application Routing is an **Azure-managed add-on**: a reconciler (part of the managed control plane, not a pod you can see in `kubectl get pods`) continuously enforces the add-on's expected configuration on the objects it owns, and treats any direct edit to them as drift to correct. There's no `az aks approuting` flag to configure replica count either — it isn't an exposed customization point for this add-on.
 
-```bash
-kubectl patch hpa nginx -n app-routing-system --type='merge' -p '{"spec":{"minReplicas":1}}'
-```
+**The actual options, not a workaround to chase**:
+1. **Leave it.** The recommended path — a `Pending` pod reserves no node resources (only *scheduled* pods do), so it's cosmetic, not a cost or a capacity drain. It'll start scheduling on its own the moment more node capacity exists — no action needed either way.
+2. **Replace the managed add-on with a self-installed `ingress-nginx` via Helm** if you genuinely need control over its HPA — trades away "Azure patches/maintains it for you" for full control. A bigger change, not justified just to silence a cosmetic `Pending` pod.
 
-(or `kubectl edit hpa nginx -n app-routing-system` and change `minReplicas` interactively). After this, the Deployment scales down to the 1 replica the node can actually support, and `kubectl get pods -n app-routing-system` shows a single `Running` pod with nothing stuck `Pending`. Worth remembering for any other AKS add-on whose default HPA minimum assumes more node capacity than a small lab cluster actually has.
+General lesson: for **Azure-managed add-ons** specifically (Web App Routing, the Key Vault Secrets Provider, the Azure Policy add-on, etc.), don't `kubectl edit`/`patch` their owned objects expecting it to persist — any config surface they intend for you to touch is exposed through `az aks` flags, not raw object edits.
 
 ```
 service/nginx           LoadBalancer   172.16.32.116   <pending>   80:30174/TCP,443:32594/TCP
@@ -265,4 +265,4 @@ One `Ready` node, the `Standard D2as v7` from §2, running the Kubernetes versio
 
 ### The overall verdict on this snapshot
 
-Cluster is healthy. The one thing that looked like a problem (`nginx` ingress pod `Pending`) was an expected consequence of the add-on's default HPA minimum (2) exceeding this subscription's single-node capacity — not a misconfiguration, and it wasn't blocking actual traffic even before the fix, since the 1 `Running` replica already served requests through the `LoadBalancer` Service. Resolved by patching the HPA's `minReplicas` down to `1` (§ above) to match real node capacity — `kubectl get pods -n app-routing-system` now shows a clean single `Running` pod with nothing stuck `Pending`.
+Cluster is healthy. The one thing that looks like a problem (`nginx` ingress pod `Pending`) is an expected, **permanent** consequence of the Web Application Routing add-on's default HPA minimum (2) exceeding this subscription's single-node capacity — not a misconfiguration, not fixable by editing the HPA (the add-on's reconciler reverts that), and not blocking actual traffic, since the 1 `Running` replica already serves requests through the `LoadBalancer` Service. The right response is to leave it alone, not to keep patching it — see the note above.
