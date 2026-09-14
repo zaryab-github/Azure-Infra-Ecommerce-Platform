@@ -21,7 +21,7 @@ spec:
       serviceAccountName: ecommerce-workload-sa
       containers:
         - name: user-service
-          image: <ACR_LOGIN_SERVER>/user-service:latest
+          image: acrecommerceprod1999.azurecr.io/user-service:latest
           ports:
             - containerPort: 3001
           env:
@@ -30,23 +30,20 @@ spec:
             - name: NODE_ENV
               value: "production"
             - name: SQL_SERVER
-              value: "<SQL_SERVER_FQDN>"
+              value: "sql-ecommerce-prod.database.windows.net"
             - name: SQL_DATABASE
-              value: "<SQL_DATABASE_NAME>"
+              value: "sqldb-ecommerce-prod"
             - name: SQL_USER
-              value: "<SQL_ADMIN_USERNAME>"
-            - name: APPLICATIONINSIGHTS_CONNECTION_STRING
-              value: "<APP_INSIGHTS_CONNECTION_STRING>"
+              value: "zaryab"
           envFrom:
             - secretRef:
                 name: app-secrets
                 optional: true
           resources:
             requests:
-              cpu: 100m
+              cpu: 30m
               memory: 128Mi
             limits:
-              cpu: 250m
               memory: 256Mi
           readinessProbe:
             httpGet:
