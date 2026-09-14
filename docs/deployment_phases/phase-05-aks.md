@@ -31,6 +31,8 @@ terraform -chdir=terraform/environments/prod apply \
 
 ## Track B — Azure Portal
 
+> For the full field-by-field walkthrough of every tab in this wizard (this summary is condensed), plus an annotated read of the resulting `kubectl get all -A` output, see [`docs/aks/aks-setup.md`](../aks/aks-setup.md).
+
 1. Inside `rg-ecommerce-prod` → **+ Create a resource** → **Azure Kubernetes Service**.
 2. **Basics**: name `aks-ecommerce-prod`, region matching the rest, **Free** tier.
 3. **Node pools**: edit the default pool — size `Standard_B2s`, node count 1, **Virtual network**: select `vnet-ecommerce-prod` / `snet-aks`, network plugin **Azure CNI**.

@@ -4,6 +4,7 @@ This directory is a deep dive into Azure Kubernetes Service itself — not the h
 
 | File | Covers |
 |---|---|
+| [aks-setup.md](aks-setup.md) | **Start here if creating a cluster through the Portal.** Every field on every tab of the "Create Kubernetes cluster" wizard, explained — plus a fully annotated walkthrough of this project's actual running cluster from `kubectl get all -A -o wide` |
 | [cluster-management.md](cluster-management.md) | The control plane vs. node pools, scaling, upgrades, stop/start, node pool sizing, what "managed" actually means |
 | [networking.md](networking.md) | Pod IPs vs. Service IPs vs. node IPs, CNI modes, DNS, Ingress, Load Balancer, how traffic actually flows in from the internet |
 | [rbac-and-identity.md](rbac-and-identity.md) | Kubernetes RBAC vs. Azure RBAC (two separate systems), ServiceAccounts, workload identity, federated credentials |
