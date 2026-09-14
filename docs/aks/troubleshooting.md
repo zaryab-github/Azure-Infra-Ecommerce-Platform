@@ -56,7 +56,28 @@ Or (faster, no waiting on a quota request): pick a smaller node size, fewer node
 
 ## `CrashLoopBackOff`
 
-The container starts, then exits (crashes or completes) repeatedly. `kubectl logs --previous` shows the last crash's output — for this project's services, the most likely cause is an uncaught exception on startup, e.g. the DB init routine throwing if `SQL_SERVER` is set to a value that doesn't actually resolve (check `Application_services/*/src/db.js`'s `getPool()` — it only skips the DB path when the env var is entirely *unset*, not when it's set to something bad).
+The container starts, then exits (crashes or completes) repeatedly. `kubectl logs <pod>` (the container restarts fast enough that you usually don't even need `--previous`) shows the exact crash — for this project's services, look at *where* the stack trace points: if it's inside `Application_services/*/src/db.js`'s `getPool()`, that's harmless — it's `.catch()`-guarded and never crashes the process, only logs `DB init failed`. If the trace instead points at the very top of `src/index.js` (line 1-2), it's almost certainly the `applicationinsights.setup()` call throwing **synchronously, before the server even starts listening** — which happens the instant `APPLICATIONINSIGHTS_CONNECTION_STRING` is set to *anything* non-empty, including a literal unresolved placeholder like `<APP_INSIGHTS_CONNECTION_STRING>`. The fix is to remove that env var entirely (not set it to a placeholder) until Phase 11 actually provides a real value — see [`docs/deployment_phases/phase-06-databases.md`](../deployment_phases/phase-06-databases.md#24--three-real-failure-modes-worth-knowing-before-you-hit-them) for the full story and the general rule this generalizes into: **a placeholder value is not the same as "unset" to application code** — `if (process.env.X)` is true for garbage text just as much as for a real value.
+
+## `502 Bad Gateway` or an indefinitely hanging `curl` from outside the cluster
+
+Two different symptoms, two different layers — tell them apart first:
+
+- **`curl` hangs forever, no response, no error** → the connection is being silently **dropped**, not rejected. On this project, the cause was the AKS subnet's NSG denying internet-sourced traffic by default (it's designed to only accept traffic that's already passed through Application Gateway, Phase 12 — which doesn't exist yet early in the build). See [`docs/deployment_phases/phase-05-aks.md`](../deployment_phases/phase-05-aks.md#known-gap--the-aks-nsg-blocks-direct-to-load-balancer-traffic-until-phase-12) for the diagnosis and the temporary fix.
+- **`curl` gets a fast `502 Bad Gateway` response** → the request *is* reaching nginx, but nginx can't get a valid response from your Service's backend pods. Check, in order: (1) `kubectl get pods -n ecommerce` — are the pods actually `Running 1/1`? (2) `kubectl get networkpolicy -A` — any policy that might block traffic from the ingress controller's namespace (`app-routing-system`) into `ecommerce`? (3) `kubectl describe ingress -n ecommerce` — is it actually pointing at the right Service name/port? In this project's own build, a `502` appeared briefly right after fixing the NSG issue above and cleared on its own within seconds — nginx just needed a moment to sync its backend state; if yours persists past a few retries, it's one of the three checks above, not a timing fluke.
+
+## `Login failed for user '<name>'` when a service connects to SQL
+
+This looks like a wrong password, but check the *simpler* explanation first: every Deployment references the `app-secrets` Secret via `envFrom: secretRef: ..., optional: true` — that `optional: true` means if the Secret **doesn't exist at all**, Kubernetes doesn't error, it just silently omits `SQL_PASSWORD` from the pod's environment, and the app connects with a blank password. SQL Server reports that exactly the same way it reports an actually-wrong password. Check existence first, before assuming the password itself is wrong:
+
+```bash
+kubectl get secret app-secrets -n ecommerce
+```
+
+A `NotFound` error means the Secret was never actually applied — see [`docs/deployment_phases/phase-06-databases.md`](../deployment_phases/phase-06-databases.md#22--create-the-secret-as-a-yaml-file-not-a-one-off-kubectl-create-command) for the fix.
+
+## "I ran the command but nothing happened"
+
+If you're pasting multi-line command blocks and wrapping them in `cat << 'EOF' ... EOF` to read them first — remember that `cat` **only prints** whatever's inside the heredoc, it doesn't execute it. This project's own build hit this repeatedly: a fix would get "run" (the text would scroll past on screen, looking exactly like normal output) but never actually take effect, because it was only ever echoed, not executed. If a command you were sure you ran doesn't seem to have changed anything, check whether it was wrapped in `cat`/`echo` — copy just the bare command and run it directly instead.
 
 ## Pod stuck in `Pending`, `Node: <none>`, no `FailedScheduling` event yet
 
