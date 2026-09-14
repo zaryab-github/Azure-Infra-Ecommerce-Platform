@@ -20,48 +20,48 @@ spec:
     spec:
       serviceAccountName: ecommerce-workload-sa
       containers:
-        - name: product-service
-          image: <ACR_LOGIN_SERVER>/product-service:latest
-          ports:
-            - containerPort: 3002
-          env:
-            - name: PORT
-              value: "3002"
-            - name: NODE_ENV
-              value: "production"
-            - name: SQL_SERVER
-              value: "<SQL_SERVER_FQDN>"
-            - name: SQL_DATABASE
-              value: "<SQL_DATABASE_NAME>"
-            - name: SQL_USER
-              value: "<SQL_ADMIN_USERNAME>"
-            - name: STORAGE_ACCOUNT_URL
-              value: "<STORAGE_BLOB_ENDPOINT>"
-            - name: APPLICATIONINSIGHTS_CONNECTION_STRING
-              value: "<APP_INSIGHTS_CONNECTION_STRING>"
-          envFrom:
-            - secretRef:
-                name: app-secrets
-                optional: true
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: 250m
-              memory: 256Mi
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 3002
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 3002
-            initialDelaySeconds: 10
-            periodSeconds: 20
+      - name: product-service
+        image: <ACR_LOGIN_SERVER>/product-service:latest
+        ports:
+        - containerPort: 3002
+        env:
+        - name: PORT
+          value: "3002"
+        - name: NODE_ENV
+          value: "production"
+        - name: SQL_SERVER
+          value: "<SQL_SERVER_FQDN>"
+        - name: SQL_DATABASE
+          value: "<SQL_DATABASE_NAME>"
+        - name: SQL_USER
+          value: "<SQL_ADMIN_USERNAME>"
+        - name: STORAGE_ACCOUNT_URL
+          value: "<STORAGE_BLOB_ENDPOINT>"
+        - name: APPLICATIONINSIGHTS_CONNECTION_STRING
+          value: "<APP_INSIGHTS_CONNECTION_STRING>"
+        envFrom:
+        - secretRef:
+            name: app-secrets
+            optional: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3002
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3002
+          initialDelaySeconds: 10
+          periodSeconds: 20
       # Phase 9 adds a secrets-store CSI volume + volumeMount here, once
       # kubernetes/secrets/secretproviderclass.yaml exists to reference —
       # see docs/deployment_phases/phase-09-secrets.md. Deliberately absent
