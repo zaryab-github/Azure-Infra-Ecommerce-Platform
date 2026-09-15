@@ -38,13 +38,13 @@ kubectl apply -f kubernetes/deployments/product-service.yaml
 
 ## Part 2 — Wire it in for a Portal-built storage account (recommended path)
 
-**2.1 — Get the real blob endpoint**: Portal → your storage account → **Overview** → **Primary endpoint** under **Blob service** (or just build it yourself: `https://<your-storage-account-name>.blob.core.windows.net/`).
+**2.1 — Get the real blob endpoint**: Portal → your storage account → **Overview** → **Primary endpoint** under **Blob service** (or just build it yourself: `https://stecommerceprod1234.blob.core.windows.net/`).
 
 **2.2 — Add `STORAGE_ACCOUNT_URL` to `product-service`'s Deployment.** This is a plain, non-secret value (just a URL), so it doesn't go in `app-secrets.yaml` — it's an ordinary env var. If you already removed this placeholder earlier (e.g. while fixing the Phase 5/6 `CrashLoopBackOff` issue — see [`docs/aks/troubleshooting.md`](../aks/troubleshooting.md)), `sed` may not find anything to replace; `kubectl set env` is the reliable way to add it regardless of the file's current placeholder state:
 
 ```bash
 kubectl set env deployment/product-service -n ecommerce \
-  STORAGE_ACCOUNT_URL="https://<your-storage-account-name>.blob.core.windows.net/"
+  STORAGE_ACCOUNT_URL="https://https://stecommerceprod1234.blob.core.windows.net/.blob.core.windows.net/"
 ```
 
 Then, so the *file* matches what's now live and a future `kubectl apply` doesn't silently remove it again (see the "old-pod-blocks-new-pod deadlock" note in Phase 6 if pods don't come back up cleanly after this), also add the same line to `kubernetes/deployments/product-service.yaml`'s `env:` block by hand (`nano`), or edit it locally and sync it over — the same lesson from Phase 6 about `sed` being unreliable applies here too.
