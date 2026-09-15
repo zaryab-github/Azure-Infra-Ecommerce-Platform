@@ -27,7 +27,9 @@ terraform -chdir=terraform/environments/prod apply -target=module.servicebus
 2. Inside the namespace → **Queues** → **+ Queue** → name `orders`, max delivery count 10.
 3. **Shared access policies** → **+ Add** → name `app-send-listen`, permissions **Send** + **Listen** only.
 
-## Wire the connection string in (temporary — Phase 9 replaces this)
+## Part 1 — Wire the connection string in (Terraform-built namespace)
+
+Temporary — Phase 9 replaces this with Key Vault:
 
 ```bash
 SB_CONN=$(terraform -chdir=terraform/environments/prod output -raw servicebus_connection_string)
@@ -36,7 +38,7 @@ kubectl create secret generic app-secrets -n ecommerce \
 kubectl rollout restart deployment -n ecommerce
 ```
 
-(This merges into the same `app-secrets` Secret Phase 6 created — `kubectl create ... --dry-run=client -o yaml | kubectl apply -f -` is idempotent and additive here since each `--from-literal` targets a different key... actually `kubectl create secret` replaces the whole Secret each time. If you already ran Phase 6's version, recreate it with both keys in one command instead:)
+`kubectl create secret` **replaces the whole Secret**, not just the one key — if `app-secrets` already exists from Phase 6 (holding `SQL_PASSWORD`), recreate it with both keys together in one command instead of the line above, or you'll silently wipe out the SQL password:
 
 ```bash
 kubectl create secret generic app-secrets -n ecommerce \
@@ -45,13 +47,46 @@ kubectl create secret generic app-secrets -n ecommerce \
   --dry-run=client -o yaml | kubectl apply -f -
 ```
 
+## Part 2 — Wire it in for a Portal-built namespace (recommended path)
+
+If you built the Service Bus namespace through the Portal (Track B) — no Terraform state to pull the connection string from. Use the same YAML-Secret file this project already uses for the SQL password (Phase 6), not a fresh ad-hoc `kubectl create secret` call.
+
+**2.1 — Get the real connection string**: Portal → your Service Bus namespace (`sb-ecommerce-prod`) → **Shared access policies** → click `app-send-listen` → copy the **Primary Connection String**.
+
+**2.2 — Add it to the *existing* `app-secrets.yaml`** (from Phase 6) — don't create a separate file. `kubectl apply` on a Secret replaces the entire object, so the file needs every key it should hold, together:
+
+```bash
+nano kubernetes/secrets/app-secrets.yaml
+```
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+  namespace: ecommerce
+type: Opaque
+stringData:
+  SQL_PASSWORD: "your-existing-sql-password"                    # from Phase 6 — keep this line
+  SERVICEBUS_CONNECTION_STRING: "your-real-connection-string"    # new
+```
+
+```bash
+kubectl apply -f kubernetes/secrets/app-secrets.yaml
+kubectl rollout restart deployment -n ecommerce
+```
+
+**No Deployment YAML edits needed** — unlike `SQL_SERVER`/`SQL_DATABASE`/`SQL_USER` (plain, non-secret values that had to be added individually per Deployment in Phase 6), the Service Bus connection string is entirely a secret, and every Deployment already pulls in *all* keys from `app-secrets` automatically via `envFrom`. Adding the key to the Secret file is enough on its own.
+
 ## Verification
 
 ```bash
-curl -X POST http://<ingress-ip>/api/orders -H "Content-Type: application/json" -d '{"userId":1,"productId":2,"quantity":1}'
+curl -X POST http://<ingress-ip>/api/orders -H "Content-Type: application/json" -d "{\"userId\":1,\"productId\":2,\"quantity\":1}"
 kubectl logs -n ecommerce deployment/product-service | grep "OrderCreated received"
-curl http://<ingress-ip>/api/products/2   # stock should have decremented
+curl http://<ingress-ip>/api/products/2   # stock should have dropped from 17 to 16
 ```
+
+If the log line appears and the stock dropped, the full async chain worked: `order-service` → Service Bus queue → `product-service`'s background receiver → stock decrement.
 
 ## Cost / Teardown
 

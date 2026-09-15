@@ -23,7 +23,7 @@ Goal: `git push` to `main` builds, tests (where tests exist), pushes images to A
    - **Azure Resource Manager** type → **Workload identity federation (automatic)** (preferred — no stored secret) → select the subscription → name it `azure-service-connection`.
 4. **Pipelines** → **New pipeline** → point at `pipelines/ci.yml` → save, name it `ci`. Repeat for `pipelines/cd.yml`, name it `cd`, and set its trigger to manual (already `trigger: none` in the file).
 5. **Pipelines → Environments** → **New environment** → name `production` → add an **Approval** check so `cd.yml`'s deploy stages need a human click before running.
-6. Set pipeline variables on `cd`: `tfStateResourceGroup` = `rg-tfstate`, `tfStateStorageAccount` = your bootstrap storage account name, `acrLoginServer` = the `acr_login_server` Terraform output.
+6. Set pipeline variables on `cd`: `tfStateResourceGroup` = `rg-tfstate`, `tfStateStorageAccount` = your bootstrap storage account name, `acrLoginServer` = your ACR's login server (Terraform: `terraform -chdir=terraform/environments/prod output -raw acr_login_server`; Portal-built: `az acr list --resource-group rg-ecommerce-prod --query "[0].loginServer" -o tsv`).
 
 ## Verification
 

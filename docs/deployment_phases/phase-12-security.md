@@ -15,19 +15,22 @@ Goal: the last piece of the architecture diagram (Application Gateway + WAF as t
 
 **Known gap, stated plainly**: this project's HTTP-only Application Gateway listener has no TLS — that needs a real domain + certificate, which this lab doesn't have. A real deployment would terminate TLS here with a cert from Key Vault. Also, deep private-endpoint hardening (Key Vault, beyond what SQL already has) is a documented stretch, not done in this pass.
 
-## Two-step deploy — App Gateway needs the ingress controller's real IP
+## Both tracks: App Gateway needs the ingress controller's real IP first
 
-App Gateway's backend pool must point at a real IP, which doesn't exist until AKS + its ingress are running (Phase 5). So:
+App Gateway's backend pool must point at a real IP, which doesn't exist until AKS + its ingress are running (Phase 5) — get it once, use it in whichever track you're following:
 
 ```bash
-# 1. Get the ingress controller's public IP (already running since Phase 5)
 INGRESS_IP=$(kubectl get svc -n app-routing-system nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+echo $INGRESS_IP
+```
 
-# 2. Set it in terraform.tfvars
+## Track A — Terraform (two-step deploy)
+
+```bash
+# Set in terraform.tfvars:
 #    deploy_appgateway      = true
-#    appgw_backend_address  = "<INGRESS_IP>"
+#    appgw_backend_address  = "<INGRESS_IP from above>"
 
-# 3. Apply
 terraform -chdir=terraform/environments/prod plan -target=module.appgateway -target=module.security
 terraform -chdir=terraform/environments/prod apply -target=module.appgateway -target=module.security
 ```
@@ -36,7 +39,7 @@ Until `deploy_appgateway = true`, `module.appgateway` has `count = 0` — it's e
 
 ## Track B — Azure Portal
 
-**Application Gateway**: `rg-ecommerce-prod` → **+ Create a resource** → **Application Gateway** → tier **WAF V2**, subnet `snet-appgw`, frontend **Public**, backend pool target = the ingress IP above, HTTP settings port 80, listener port 80 → **WAF policy** tab → create new, ruleset **OWASP 3.2**, mode **Prevention**.
+**Application Gateway**: `rg-ecommerce-prod` → **+ Create a resource** → **Application Gateway** → tier **WAF V2**, subnet `snet-appgw`, frontend **Public**, backend pool target = `$INGRESS_IP` from above, HTTP settings port 80, listener port 80 → **WAF policy** tab → create new, ruleset **OWASP 3.2**, mode **Prevention**.
 
 **Policy**: Subscription → **Policy** → **Definitions** → search "Require a tag on resources" / "Allowed locations" → **Assign**, scope = `rg-ecommerce-prod`.
 
@@ -48,14 +51,34 @@ Until `deploy_appgateway = true`, `module.appgateway` has `count = 0` — it's e
 kubectl apply -f kubernetes/security/networkpolicy.yaml
 ```
 
+## Close the Phase 5 gap — remove the temporary direct-to-ingress NSG rule
+
+Back in Phase 5, `nsg-ecommerce-aks-prod` got a temporary rule (`AllowInternetHTTP-Temporary`) allowing internet traffic straight to the AKS subnet, because Application Gateway didn't exist yet. It does now — App Gateway should be the only public entry point, so remove that rule:
+
+```bash
+az network nsg rule delete --resource-group rg-ecommerce-prod --nsg-name nsg-ecommerce-aks-prod --name AllowInternetHTTP-Temporary
+```
+
+After this, `curl` straight to the ingress's own public IP should go back to hanging (dropped by the NSG again, as originally designed) — traffic must go through App Gateway now.
+
 ## Verification
 
 ```bash
-curl http://<appgateway-public-ip>/api/users   # now via App Gateway + WAF, not the raw ingress IP
+# Terraform-built: the public IP has a predictable name
+APPGW_IP=$(az network public-ip show --resource-group rg-ecommerce-prod --name pip-ecommerce-appgw-prod --query ipAddress -o tsv)
+# Portal-built: get it from the Application Gateway resource's Overview blade instead
+# (the Portal wizard names its own public IP, not necessarily this one)
+
+curl http://$APPGW_IP/api/users        # now via App Gateway + WAF, not the raw ingress IP
+curl http://$APPGW_IP/api/products
+curl http://$APPGW_IP/api/orders
+
 az policy assignment list --resource-group rg-ecommerce-prod --output table
 az security pricing list --output table
 kubectl get networkpolicy -n ecommerce
 ```
+
+If all three `curl` calls return the same JSON they did in Phase 5/6/7 — but now via the App Gateway's IP instead of the raw ingress IP — the WAF is correctly in front of everything, and the network architecture matches the original design intent for the first time in the build.
 
 ## Cost / Teardown
 

@@ -36,19 +36,34 @@ Since `enable_monitoring` defaults to `true` and `module.aks` references `module
 
 ## Wire Application Insights into the services
 
+**Get the connection string**:
+- **Terraform-built**: `terraform -chdir=terraform/environments/prod output -raw app_insights_connection_string`
+- **Portal-built**: Portal → your Application Insights resource → **Overview** → **Connection String** (copy button)
+
+**This is the exact env var that crashed the app back in Phase 5/6** (`APPLICATIONINSIGHTS_CONNECTION_STRING` set to placeholder text — see [`docs/aks/troubleshooting.md`](../aks/troubleshooting.md)) — so it was very likely **removed entirely** from the Deployment YAMLs at that point, not left as a placeholder. That means there's nothing for `sed` to find-and-replace anymore; add it back with `kubectl set env` instead, which works regardless of the file's current state:
+
 ```bash
-AI_CONN=$(terraform -chdir=terraform/environments/prod output -raw app_insights_connection_string 2>/dev/null)
-sed -i "s#<APP_INSIGHTS_CONNECTION_STRING>#$AI_CONN#g" kubernetes/deployments/*.yaml
-kubectl apply -f kubernetes/deployments/
+AI_CONN="<paste the real connection string here>"
+
+kubectl set env deployment/order-service -n ecommerce APPLICATIONINSIGHTS_CONNECTION_STRING="$AI_CONN"
+kubectl set env deployment/product-service -n ecommerce APPLICATIONINSIGHTS_CONNECTION_STRING="$AI_CONN"
+kubectl set env deployment/user-service -n ecommerce APPLICATIONINSIGHTS_CONNECTION_STRING="$AI_CONN"
 ```
+
+As always, this only patches the *live* objects — also add the same line back into each `kubernetes/deployments/*.yaml`'s `env:` block by hand (`nano`) so the file matches what's running and a future `kubectl apply -f kubernetes/deployments/` doesn't strip it out again.
+
+Each `kubectl set env` starts a new rollout — check `kubectl get pods -n ecommerce -o wide` afterward and clear any stuck old ReplicaSets the usual way (`kubectl delete rs <old-name> -n ecommerce`) if the new pods sit `Pending` behind them.
 
 ## Verification
 
 ```bash
-kubectl logs -n ecommerce deployment/user-service | head
-# Azure Portal → Application Insights → Live Metrics, after a few requests
-curl http://<ingress-ip>/api/users
+kubectl get pods -n ecommerce -o wide                              # all three Running 1/1, no duplicates
+kubectl logs -n ecommerce deployment/user-service | head           # no crash, no "Instrumentation key not found" error
+curl http://<ingress-ip>/api/users                                 # generates a real request to trace
+curl http://<ingress-ip>/api/products
 ```
+
+Then check Portal → your Application Insights resource → **Live Metrics** or **Transaction search** — the requests from the two `curl` calls above should appear within a few seconds to a minute.
 
 ## Cost / Teardown
 
